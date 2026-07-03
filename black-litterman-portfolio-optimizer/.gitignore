@@ -1,0 +1,7 @@
+sp500_stocks.csv
+cache/
+output/
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
+.claude/
