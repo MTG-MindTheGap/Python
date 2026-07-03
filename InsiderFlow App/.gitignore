@@ -1,0 +1,7 @@
+.claude/
+__pycache__/
+*.pyc
+finance_tools.log*
+.DS_Store
+venv*/
+.env

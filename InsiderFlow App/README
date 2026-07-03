@@ -1,0 +1,154 @@
+INSIDERFLOW
+===========
+
+A local dashboard that tracks corporate insider buying/selling activity from
+SEC EDGAR Form 4 filings and overlays those trades on a price chart (via
+Yahoo Finance) -- so you can see exactly when insiders bought or sold
+relative to the stock price.
+
+No API keys required. Runs entirely on your machine.
+
+FEATURES
+--------
+- Search any US-listed ticker (e.g. AAPL, NVDA, TSLA, MU)
+- Insider buy/sell markers plotted directly on the price chart
+- Filter by transaction type (buy / sell) and minimum dollar value
+- Choose a time window -- last 30 days up to full history since IPO
+- Results are cached in memory so repeat lookups are fast
+- All activity and errors are logged to finance_tools.log for easy debugging
+- Chat assistant (bottom-right bubble) that answers questions about the
+  insider transactions currently loaded, e.g. "who sold the most this
+  quarter?" -- runs locally via Ollama, no cloud API key needed
+
+
+REQUIREMENTS
+------------
+- Python 3.9+
+- Internet access (the app talks to sec.gov and Yahoo Finance directly)
+- Optional, for the chat assistant only: Ollama (https://ollama.com)
+  installed and running locally, with a model pulled (default: llama3.2).
+  The dashboard itself works fully without Ollama -- only the chat bubble
+  needs it.
+
+That's it -- no database, no cloud API keys, no signup.
+
+
+GETTING STARTED
+----------------
+
+1. Clone the repo
+
+   git clone https://github.com/<your-username>/insiderflow.git
+   cd insiderflow
+
+2. Run it
+
+   python insiderflow_app.py
+
+   That's the whole setup. On first run, the script automatically checks
+   for and installs its own dependencies (flask, requests) if they're
+   missing -- you don't need to pip install anything yourself first.
+
+   If your system uses python3 instead of python, run:
+   python3 insiderflow_app.py
+
+3. Open the dashboard
+
+   Once you see this in your terminal:
+
+       InsiderFlow Dashboard
+       http://127.0.0.1:8090
+
+   Open http://127.0.0.1:8090 in your browser.
+
+4. Search a ticker
+
+   Type a ticker symbol (e.g. NVDA) into the search box. The dashboard
+   will:
+   - Fetch the company's recent Form 4 filings from SEC EDGAR
+   - Pull price history from Yahoo Finance
+   - Plot insider buys (green) and sells (red) directly on the chart
+
+   Tip: Selecting "Since IPO (all)" in the date-range dropdown pulls a
+   company's entire filing history and can take 1-2 minutes for older,
+   larger companies. Shorter windows (30-90 days) load almost instantly.
+
+5. (Optional) Use the chat assistant
+
+   Click the chat bubble in the bottom-right corner and ask a question
+   about the ticker you've searched, e.g. "who sold the most NVDA?" or
+   "any buys in the last month?". This requires Ollama running locally:
+
+       ollama pull llama3.2
+       ollama serve
+
+   If Ollama isn't running, the chat bubble will tell you so -- the rest
+   of the dashboard keeps working normally either way. To use a
+   different model, set the OLLAMA_MODEL environment variable before
+   running the app.
+
+
+PROJECT STRUCTURE
+------------------
+insiderflow/
+  insiderflow_app.py    Main application (backend + frontend, single file)
+  finance_tools.log     Auto-created log file (errors, warnings, activity)
+  README
+
+The entire app -- Flask backend, HTML, CSS, and JavaScript frontend --
+lives in a single file for simplicity. There's nothing else to install
+or configure.
+
+
+LOGGING AND TROUBLESHOOTING
+----------------------------
+Every run writes structured logs to finance_tools.log in the same folder
+as the script, in addition to printing to your terminal. This includes:
+
+- Startup/shutdown events
+- Every ticker lookup and how many transactions were found
+- Full error tracebacks for any failed request (e.g. SEC rate-limiting,
+  network issues, bad tickers)
+
+The log file automatically rotates once it reaches ~2MB (keeping the
+last 3 files), so it won't grow unbounded.
+
+If something isn't working:
+
+1. Check finance_tools.log first -- the exact error and full traceback
+   will be there.
+2. Common causes:
+   - No results for a ticker -> try a longer date range, or confirm the
+     ticker is correct.
+   - SEC EDGAR errors (403/429) -> SEC rate-limits automated requests;
+     wait a minute and retry.
+   - Price data unavailable -> Yahoo Finance occasionally has gaps for
+     very new or thinly-traded tickers.
+3. Still stuck? Open a GitHub Issue on the repo and paste the relevant
+   lines from finance_tools.log.
+
+
+HOW IT WORKS
+------------
+- Insider data: Pulled directly from SEC EDGAR (sec.gov/edgar) Form 4
+  filings (the form insiders must file within 2 business days of a
+  transaction). Parsed straight from the underlying filing XML -- no
+  third-party data provider involved.
+- Price data: Pulled from Yahoo Finance's public chart API (no key
+  needed).
+- Caching: Ticker and price lookups are cached in memory for 5-10
+  minutes to avoid hammering SEC/Yahoo on repeated searches.
+
+
+DISCLAIMER
+----------
+This tool is for informational and educational purposes only. It is not
+financial advice. Insider transaction data can reflect routine,
+pre-scheduled trades (e.g. 10b5-1 plans) as well as tax withholding and
+option exercises -- not just discretionary conviction trades. Always do
+your own research before making investment decisions.
+
+
+LICENSE
+-------
+MIT -- feel free to fork, modify, and use this however you'd like.
