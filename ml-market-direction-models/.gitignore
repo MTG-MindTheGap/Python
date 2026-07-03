@@ -1,0 +1,5 @@
+spy_project_output/
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
+.claude/
